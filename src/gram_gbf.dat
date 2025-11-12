@@ -1,0 +1,21 @@
+{ Syntaxe des Grammaires Bien Formees (GBF) :  }
+
+{
+%1 : Initialiser Tab_Gram[Regle]
+%2 : Avancer le pointeur
+%3 : Produire le Terme
+%4 : Produire la barre
+%5 : Produire nil
+}
+
+Expr     =  'Regle'  %1  'Affect' Partie1  Expr
+         |  'Fin'  ;
+
+Partie1  =  Terme    %3  Partie2  ;
+
+Partie2  =  'Barre'  %2 %4 %2  Partie1
+         |   Terme   %2 %3     Partie2
+         |  'Separ'  %5  ;
+
+Terme    =  'Regle'
+         |  'Code'  ;

@@ -1,0 +1,177 @@
+<html>
+<head>
+<title>Compilation</title>
+</head>
+
+<body text="#000000">
+
+<font color=#000000 face=VERDANA>
+<img src="../images/compilation.gif"><br/>
+<p/>
+Référence :<br/>
+Compilateurs, principes, techniques et outils (A.V. Aho, R. Sethi et J.D. Ullman - InterEditions).<br/>
+<p/>
+
+
+<b>Compilateur pour Grammaire Bien Formée (GBF) :</b><br/>
+Analyse un fichier texte source (.gbf) contenant la grammaire en entrée<br/>
+et génére un fichier binaire (.dat) contenant la table predictive sous forme inverse en sortie.<br/>
+<p/>
+La grammaire d'un compilateur GBF (elle même au format GBF) :<br/>
+<p/>
+
+<pre>
+{ Syntaxe des Grammaires Bien Formees (GBF) :  }
+
+{
+%1 : Initialiser Tab_Gram[Regle]
+%2 : Avancer le pointeur
+%3 : Produire le Terme
+%4 : Produire la barre
+%5 : Produire nil
+}
+
+Expr     =  'Regle'  %1  'Affect' Partie1  Expr
+         |  'Fin'  ;
+
+Partie1  =  Terme    %3  Partie2  ;
+
+Partie2  =  'Barre'  %2 %4 %2  Partie1
+         |   Terme   %2 %3     Partie2
+         |  'Separ'  %5  ;
+
+Terme    =  'Regle'
+         |  'Code'  ;
+
+</pre>
+
+<p/>
+Generateur de la table prédictive d'analyse syntaxique descendante
+à partir d'une grammaire de type LL(1) :<br/>
+
+<pre>
+/*
+---------------------------------------------------------------------
+Generateur de TABLE D'ANALYSE SYNTAXIQUE
+pour grammaire de type LL.
+
+La grammaire est de type LL
+( et permet une analyse descendante predictive ) ssi :
+1: X --> Y1 | Y2 | .. | Yk
+   Premier(Yi) ï Premier(Yj) = í pour i<>j
+2: X --> Vide
+   Premier(X) ï Suivant(X) = í
+
+( Voir plus loin pour la definition des fonctions
+  Premier et Suivant )
+
+En pratique la grammaire LL doit etre:
+1: Non ambigue (probleme du IF THEN ELSE & des Expressions)
+2: Deterministe (factorisee a gauche)
+   Ex: Instr = 'ID' ':=' Valeur | 'ID' '(' Liste_Id ')'
+       est transformee en:
+       Instr    = 'ID' Suite_Id
+       Suite_Id = ':=' Valeur | '(' Liste_Id ')'
+   Methode generale A --> X Y | X Z  donne:
+      A1 --> X A2
+      A2 --> Y | Z
+3: Non recursive a gauche
+   Ex: Liste_Id = Liste_Id ',' 'ID' | 'ID'
+       est transformee en:
+       Liste_Id1 = 'ID' Liste_Id2
+       Liste_Id2 = ',' 'ID' Liste_Id2 | 'Vide'
+   Methode generale: A --> A X | Y donne:
+      A1 --> Y A2
+      A2 --> X A2 | 'Vide'
+
+Pour utiliser ce programme SYNTAXE:
+
+1: Ecrire la grammaire dans le fichier GRAM.DAT
+   suivant la syntaxe GBF.
+   (syntaxe des Grammaire Bien Formee
+   voir plus loin dans le programme)
+
+2: Coder le lexique et les regles
+   utilises dans la grammaire
+   dans le programme CODE.PAS
+   (On utilise pour cela 2 tableaux,
+   ne pas oublier les codes 'Vide' & 'Fin')
+
+3: Executer ce programme SYNTAXE,
+   si la grammaire est mal formee --> Echec
+   si la grammaire n'est pas de type LL
+   le programme va planter.
+   sinon la table predictive (sous forme inverse)
+   est dans le fichier TAB.DAT (file of byte):
+   0 | Type (Regle=1\Code=2) , Num correspondant, Liste de productions
+----------------------------------------------------------------------
+*/
+
+/*
+------------------------------------------------------------------------
+Fonction PREMIER :
+
+1. Si X --> a alors, mettre a dans p(X)
+
+2. Si X --> A | B alors, p(X) = p(A) + p(B)
+
+3. Si X --> Y1 Y2 .. Yk,  p(X) = p(Y1) + .. p(Yk) exept‚ le Vide
+   quand Vide est dans p(Y1), .. , p(Yk-1)
+   Si Vide est dans Y1 … Yk mettre Vide dans X
+------------------------------------------------------------------------
+*/
+
+/*
+-------------------------------------------------------------------------
+Fonction SUIVANT :
+
+1: Mettre Fin dans s(S), ou S est l'GBF.axiome et Fin
+   le marqueur indiquant la fin du texte source
+
+2: A --> X B Y alors s(B):=s(B)+p(Y) excepte le Vide
+
+3: A --> X B   ou   A --> X B Y et Vide dans p(Y) alors,
+   s(B):=s(B)+s(A)
+-------------------------------------------------------------------------
+*/
+</pre>
+
+<p/>
+
+Algorithme de l'analyse syntaxique utilisant la table predictive sous forme inverse :<br/>
+<pre>
+/*
+----------------------- Analyse Syntaxique --------------------------
+Algorithme de l'analyse :
+Soit X le symbole en sommet de pile
+et a le symbole d'entree courant
+
+1: Si X=a DEPILER X
+2: Si X est un non-terminal, consulter Table[X,a]
+   c'est une Erreur --> Echec
+   sinon DEPILER X , EMPILER Table[X,a]
+   Ex: Table[X,a]=( X --> U V W )
+   on DEPILE X , on EMPILE dans l'ordre W V U
+   de maniere a avoir U en haut de la pile.
+   (le travaille est facilite avec une table
+   d'analyse inversee...)
+
+On avance pos_fichier sur le symbole suivant,
+et on recommence.
+----------------------------------------------------------------------
+*/
+</pre>
+
+<p/>
+<img src="table_analyse.gif"><br/>
+<p/>
+
+
+<p/>
+Sources et code du compilateur GBF : <a href="gbf.zip">gbf.zip</a>.<br/>
+
+<p/>
+
+</font>
+</body>
+</html>
